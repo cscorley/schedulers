@@ -25,14 +25,11 @@ typedef struct{
 	struct node * tail;
 } queue;
 
-typedef bool comp_func (process *a,
-                        process *b);
-
 void initialize(queue*);
 int isEmpty(queue*);
 int length(queue *);
 void push(queue*, process*);
-void pushOrdered(queue*, process*, comp_func*);
+void pushOrdered(queue*, process*, bool(*)(process *, process *));
 process * pop(queue*);
 queue * copy(queue *);
 

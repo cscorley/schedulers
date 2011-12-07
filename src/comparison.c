@@ -301,7 +301,7 @@ void roundRobinScheduler(queue * processes, char* output){
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void generalScheduler(queue * processes, char* output, comp_func* comp){
+void generalScheduler(queue * processes, char* output, bool(*comp)(process *, process *)){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){

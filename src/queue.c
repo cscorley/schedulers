@@ -93,7 +93,7 @@ void push(queue * q, process * j) {
  * @param	j	the process job to be inserted into the node of the queue
  * @param   comp   function which decides how the list will be sorted
  */
-void pushOrdered(queue * q, process * j, comp_func * comp) {
+void pushOrdered(queue * q, process * j, bool(* comp)(process *, process *)) {
 	struct node * newNode;
 	newNode = malloc(sizeof(struct node));
 	if(newNode == NULL){
