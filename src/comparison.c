@@ -19,6 +19,18 @@
 
 #define MAX_QUANTUM 10
 
+bool arrival_less_func(process * a, process * b){
+    return (a->arrival < b->arrival);
+}
+
+bool service_less_func(process * a, process * b){
+    return (a->service < b->service);
+}
+
+bool priority_more_func(process * a, process * b){
+    return (a->priority > b->priority);
+}
+
 /*
  *
  * name: main
@@ -99,17 +111,10 @@ void run(char * input){
     jobCount = length(&jobList);
 
     printf("\nScheduling %d jobs\n", jobCount);
-    fflush(stdout);
 
     roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
-    printf("\n\tRound robin complete.");
-    fflush(stdout);
-    shortestJobScheduler(copy(&jobList),"shortestJobResults.txt");
-    printf("\n\tShortest job complete.");
-    fflush(stdout);
-    highestPriorityScheduler(copy(&jobList),"highestPriorityResults.txt");
-    printf("\n\tHighest priority complete.");
-    fflush(stdout);
+    generalScheduler(copy(&jobList),"shortestJobResults.txt", &service_less_func);
+    generalScheduler(copy(&jobList),"highestPriorityResults.txt", &priority_more_func);
 
     printf("\n\nDone!");
 
@@ -159,7 +164,7 @@ void readJobs(queue * processes, char * input){
                 &p->service,
                 &p->priority) == 4){
             p->timeleft = p->service;
-            pushByArrival(processes, p);
+            pushOrdered(processes, p, &arrival_less_func);
             p = (process *)malloc(sizeof(process));
             if(p == NULL){
                 printf("out of memory");
@@ -212,7 +217,7 @@ double calculateWait(char * fileName, int jobCount)
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void roundRobinScheduler(queue * processes,char* output){
+void roundRobinScheduler(queue * processes, char* output){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
@@ -289,14 +294,14 @@ void roundRobinScheduler(queue * processes,char* output){
 
 /*
  *
- * name: shortestJobScheduler
+ * name: generalJobScheduler
  *
  * Function simulates the scheduler algorithm on a CPU and prints the results to the file given
  *
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void shortestJobScheduler(queue * processes, char* output){
+void generalScheduler(queue * processes, char* output, comp_func* comp){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
@@ -334,7 +339,7 @@ void shortestJobScheduler(queue * processes, char* output){
             }
             while(nextJob != NULL){
                 if(nextJob->arrival <= clock){
-                    pushByService(&waiting, nextJob);
+                    pushOrdered(&waiting, nextJob, comp);
                     nextJob = pop(processes);
                 }
                 else{
@@ -363,81 +368,3 @@ void shortestJobScheduler(queue * processes, char* output){
         exit(1);
     }
 }
-
-/*
- *
- * name: highestPriorityScheduler
- *
- * Function simulates the scheduler algorithm on a CPU and prints the results to the file given
- *
- * @param    processes    a process array of processes to be scheduled for work in the CPU
- * @param    output    a character array of the file name to be printed to
- */
-void highestPriorityScheduler(queue * processes, char* output){
-    FILE* outfile;
-    outfile = fopen(output, "w");
-    if(outfile != NULL){
-        // make a couple things needed
-        process * inCPU = (process *)malloc(sizeof(process));
-        process * nextJob;
-        queue waiting;
-
-        if (!isEmpty(processes)){
-            nextJob = pop(processes);
-        }
-        else{
-            printf("No jobs?");
-            exit(1);
-        }
-
-
-        // initialize everything before starting
-        initialize(&waiting);
-        inCPU->timeleft = -1;
-        int clock = -1;
-        bool CPUfree = true;
-
-        //begin simulation
-        while(true){
-            clock++;
-            inCPU->timeleft--;
-            if(inCPU->timeleft == 0){
-                fprintf(outfile, "%s %d %d %d\n",
-                    inCPU->name,
-                    inCPU->arrival,
-                    clock - inCPU->service - inCPU->arrival, // the wait time
-                    clock);
-                CPUfree = true;
-            }
-            while(nextJob != NULL){
-                if(nextJob->arrival <= clock){
-                    pushByPriority(&waiting, nextJob);
-                    nextJob = pop(processes);
-                }
-                else{
-                    break;
-                }
-            }
-            if(CPUfree){
-                if(isEmpty(&waiting)){
-                    if(isEmpty(processes)){
-                        break;
-                    }
-                }
-                else{
-                    inCPU = pop(&waiting);
-                    if(inCPU->timeleft <= 0){
-                        inCPU->timeleft = inCPU->service;
-                    }
-                    CPUfree = false;
-                }
-            }
-        }
-        fclose(outfile);
-    }
-    else{
-        printf("Could not open output file!");
-        exit(1);
-    }
-}
-

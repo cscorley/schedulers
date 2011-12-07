@@ -9,7 +9,10 @@
 #ifndef queue_h
 #define queue_h
 
+#include <stddef.h>
+#include <stdbool.h>
 #include "process.h"
+
 
 struct node{
 	process * job;
@@ -22,13 +25,14 @@ typedef struct{
 	struct node * tail;
 } queue;
 
+typedef bool comp_func (process *a,
+                        process *b);
+
 void initialize(queue*);
 int isEmpty(queue*);
 int length(queue *);
 void push(queue*, process*);
-void pushByPriority(queue*, process*);
-void pushByService(queue*, process*);
-void pushByArrival(queue*, process*);
+void pushOrdered(queue*, process*, comp_func*);
 process * pop(queue*);
 queue * copy(queue *);
 

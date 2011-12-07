@@ -17,7 +17,7 @@
 void readJobs(queue *, char *);
 double calculateWait(char *, int);
 void roundRobinScheduler(queue *, char *);
-void shortestJobScheduler(queue *, char *);
+void generalScheduler(queue *, char *, comp_func*);
 void highestPriorityScheduler(queue *, char *);
 
 int main(int, char**);

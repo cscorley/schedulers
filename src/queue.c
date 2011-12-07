@@ -49,160 +49,6 @@ void initialize(queue * q){
 
 /*
  *
- * name: pushByService
- *
- * Pushes the given process job onto the given queue in an order so that the jobs with the lowest
- * service time are first
- *
- * @param	q	the queue to be pushed onto
- * @param	j	the process job to be inserted into the node of the queue
- */
-void pushByService(queue * q, process * j) {
-	struct node * newNode;
-	newNode = malloc(sizeof(struct node));
-	if(newNode == NULL){
-		printf("out of memory");
-		exit(1);
-	}
-
-	newNode->job = j;
-
-	if(!isEmpty(q)){
-		// some older code which finds where to insert
-		struct node * before;
-		struct node * after;
-		before = q->head;
-		after = q->head;
-		while(after != NULL && j->service >= after->job->service){
-			before = after;
-			after = after->next;
-		}
-
-		newNode->next = after;
-
-		if(after != q->head){
-			before->next = newNode;
-		}
-		else{
-			q->head = newNode;
-		}
-
-		q->count++;
-	}
-	else{
-		q->head = newNode;
-		q->head->next = NULL;
-		q->tail = q->head;
-		q->count = 1;
-	}
-}
-
-
-/*
- *
- * name: pushByPriority
- *
- * Pushes the given process job onto the given queue in an order so that the jobs with the highest
- * priorty are first
- *
- * @param	q	the queue to be pushed onto
- * @param	j	the process job to be inserted into the node of the queue
- */
-void pushByPriority(queue * q, process * j) {
-	struct node * newNode;
-	newNode = malloc(sizeof(struct node));
-	if(newNode == NULL){
-		printf("out of memory");
-		exit(1);
-	}
-
-	newNode->job = j;
-
-	if(!isEmpty(q)){
-		// some older code which finds where to insert
-		struct node * before;
-		struct node * after;
-		before = q->head;
-		after = q->head;
-		while(after != NULL && j->priority <= after->job->priority){
-			before = after;
-			after = after->next;
-		}
-
-		newNode->next = after;
-
-		if(after != q->head){
-			before->next = newNode;
-		}
-		else{
-			q->head = newNode;
-		}
-
-		q->count++;
-	}
-	else{
-		q->head = newNode;
-		q->head->job = j;
-		q->head->next = NULL;
-		q->tail = q->head;
-		q->count = 1;
-	}
-}
-
-/*
- *
- * name: pushByArrival
- *
- * Pushes the given process job onto the given queue in an order so that the jobs with the lowest
- * arrival are first
- *
- * @param	q	the queue to be pushed onto
- * @param	j	the process job to be inserted into the node of the queue
- */
-void pushByArrival(queue * q, process * j) {
-	struct node * newNode;
-	newNode = malloc(sizeof(struct node));
-	if(newNode == NULL){
-		printf("out of memory");
-		exit(1);
-	}
-    //printf("job push: %s %d %d %d\n", j->name, j->arrival, j->service, j->priority);
-    //fflush(stdout);
-
-	newNode->job = j;
-
-	if(!isEmpty(q)){
-		// some older code which finds where to insert
-		struct node * before;
-		struct node * after;
-		before = q->head;
-		after = q->head;
-		while(after != NULL && j->arrival >= after->job->arrival){
-			before = after;
-			after = after->next;
-		}
-
-		newNode->next = after;
-
-		if(after != q->head){
-			before->next = newNode;
-		}
-		else{
-			q->head = newNode;
-		}
-
-		q->count++;
-	}
-	else{
-		q->head = newNode;
-		q->head->next = NULL;
-		q->tail = q->head;
-		q->count = 1;
-	}
-}
-
-/*
- *
  * name: push
  *
  * Pushes the given process job onto the given queue in an order of arrival (FIFO)
@@ -234,6 +80,61 @@ void push(queue * q, process * j) {
 		q->count = 1;
 	}
 }
+
+
+/*
+ *
+ * name: pushByOrdered
+ *
+ * Pushes the given process job onto the given queue in an order according to
+ * the comp_func
+ *
+ * @param	q	the queue to be pushed onto
+ * @param	j	the process job to be inserted into the node of the queue
+ * @param   comp   function which decides how the list will be sorted
+ */
+void pushOrdered(queue * q, process * j, comp_func * comp) {
+	struct node * newNode;
+	newNode = malloc(sizeof(struct node));
+	if(newNode == NULL){
+		printf("out of memory");
+		exit(1);
+	}
+    //printf("job push: %s %d %d %d\n", j->name, j->arrival, j->service, j->priority);
+    //fflush(stdout);
+
+	newNode->job = j;
+
+	if(!isEmpty(q)){
+		// some older code which finds where to insert
+		struct node * before;
+		struct node * after;
+		before = q->head;
+		after = q->head;
+		while(after != NULL && !comp(j, after->job)){
+			before = after;
+			after = after->next;
+		}
+
+		newNode->next = after;
+
+		if(after != q->head){
+			before->next = newNode;
+		}
+		else{
+			q->head = newNode;
+		}
+
+		q->count++;
+	}
+	else{
+		q->head = newNode;
+		q->head->next = NULL;
+		q->tail = q->head;
+		q->count = 1;
+	}
+}
+
 
 /*
  *
