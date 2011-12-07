@@ -8,10 +8,10 @@ all : comparison
 comparison : $(OBJS)
 		$(CC) $(LFLAGS) $(OBJS) -o comparison
 
-queue.o : process.h queue.h
+queue.o : process.h queue.h queue.c
 		$(CC) $(CFLAGS) queue.c
 
-comparison.o : process.h queue.h comparison.h
+comparison.o : process.h queue.h comparison.h comparison.c
 		$(CC) $(CFLAGS) comparison.c
 
 clean:

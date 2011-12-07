@@ -8,14 +8,15 @@
  */
 
 
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include "process.h"
 #include "queue.h"
 #include "comparison.h"
 
-#define TRUE 1
-#define FALSE 0
 #define MAX_FILE_LEN 64
 #define MAX_JOBS 32
 #define MAX_QUANTUM 10
@@ -29,11 +30,68 @@
  */
 int main(int argc, char** argv)
 {
-    printf("Scheduler Comparison.\n\n");
+    bool iFlag = false;
+    bool gFlag = false;
+    int opt;
+    char * argFileName;
+    int argTestCount;
 
-    printf("Name of your input file (%d characters max): ", MAX_FILE_LEN);
-    char input[MAX_FILE_LEN];
-    scanf("%s", input);
+    // get the passed options from the user
+    // options c and n are required to run.
+    while ((opt = getopt(argc, argv, "hg:i:")) != -1) {
+        switch (opt) {
+            case 'h':
+                printf("Usage: %s (-i input_file | -g number)\n\n", argv[0]);
+                printf("Options:\n\t-i\tInput file for testing");
+                printf("\n\t-g\tGenerate the given number of random tests");
+                printf("\n\n\t-h\tDisplays this help message\n");                
+                exit(EXIT_SUCCESS);        
+            case 'i':
+                iFlag = true;
+                argFileName = (char *)malloc(strlen(optarg));
+                if(argFileName == NULL){
+                    printf("Can't get memory!");
+                    exit(EXIT_FAILURE);
+                }
+                strcpy(argFileName, optarg);
+                break;
+            case 'g':
+                gFlag = true;
+                argTestCount = atoi(optarg);
+                break;
+            default: /* '?' */
+                fprintf(stderr, "Usage: %s [-i input_file] [-g number]\n\n", argv[0]);
+                exit(EXIT_FAILURE);
+        }
+    }
+    
+    if (!iFlag && !gFlag){
+        printf("Expected at least one option, either -i or -g. See help (%s -h)\n\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if (iFlag){
+        run(argFileName);
+    }
+
+    if (gFlag){
+        generate(argTestCount);
+    }
+
+    // might as well?
+    printf("\n\n");
+    exit(EXIT_SUCCESS);
+}
+
+void generate(int testCount){
+    printf("%d pancakes for everyone!!!", testCount);
+    return;
+}
+
+void run(char * input){
+    printf("Running Scheduler Comparison.\n\n");
+
+    printf("Input file: %s", input);
 
     printf("\nReading file...");
     process jobList[MAX_JOBS];
@@ -73,7 +131,7 @@ int main(int argc, char** argv)
     else if(highestPriorityAverage < shortestJobAverage && highestPriorityAverage < roundRobinAverage){
         printf("Highest Priority First.");
     }
-    return 0;
+
 }
 
 /*
@@ -163,10 +221,10 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
         int currentJob = 0;
         int clock = -1;
         int quantum = MAX_QUANTUM + 1;
-        int CPUfree = TRUE;
+        bool CPUfree = true;
 
         //begin simulation
-        while(TRUE){
+        while(true){
             quantum--;
             clock++;
             inCPU->timeleft--;
@@ -176,7 +234,7 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
                     inCPU->arrival,
                     clock - inCPU->service - inCPU->arrival, // the wait time
                     clock);
-                CPUfree = TRUE;
+                CPUfree = true;
             }
             if(quantum == 0 && !CPUfree){
                 push(&waiting, inCPU);
@@ -201,7 +259,7 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
                         inCPU->timeleft = inCPU->service;
                     }
                     quantum = MAX_QUANTUM;
-                    CPUfree = FALSE;
+                    CPUfree = false;
                 }
             }
         }
@@ -235,10 +293,10 @@ void shortestJobScheduler(process * processes, int jobCount, char* output){
         inCPU->timeleft = -1;
         int clock = -1;
         int currentJob = 0;
-        int CPUfree = TRUE;
+        bool CPUfree = true;
 
         //begin simulation
-        while(TRUE){
+        while(true){
             clock++;
             inCPU->timeleft--;
             if(inCPU->timeleft == 0){
@@ -247,7 +305,7 @@ void shortestJobScheduler(process * processes, int jobCount, char* output){
                     inCPU->arrival,
                     clock - inCPU->service - inCPU->arrival, // the wait time
                     clock);
-                CPUfree = TRUE;
+                CPUfree = true;
             }
             while(processes[currentJob].arrival == clock){
                 if(currentJob < jobCount){
@@ -266,7 +324,7 @@ void shortestJobScheduler(process * processes, int jobCount, char* output){
                     if(inCPU->timeleft <= 0){
                         inCPU->timeleft = inCPU->service;
                     }
-                    CPUfree = FALSE;
+                    CPUfree = false;
                 }
             }
         }
@@ -300,10 +358,10 @@ void highestPriorityScheduler(process * processes, int jobCount, char* output){
         inCPU->timeleft = -1;
         int clock = -1;
         int currentJob = 0;
-        int CPUfree = TRUE;
+        bool CPUfree = true;
 
         // begin simulation
-        while(TRUE){
+        while(true){
             clock++;
             inCPU->timeleft--;
             if(inCPU->timeleft == 0){
@@ -312,7 +370,7 @@ void highestPriorityScheduler(process * processes, int jobCount, char* output){
                     inCPU->arrival,
                     clock - inCPU->service - inCPU->arrival, // the wait time
                     clock );
-                CPUfree = TRUE;
+                CPUfree = true;
             }
             while(processes[currentJob].arrival == clock){
                 if(currentJob < jobCount){
@@ -331,7 +389,7 @@ void highestPriorityScheduler(process * processes, int jobCount, char* output){
                     if(inCPU->timeleft <= 0){
                         inCPU->timeleft = inCPU->service;
                     }
-                    CPUfree = FALSE;
+                    CPUfree = false;
                 }
             }
         }

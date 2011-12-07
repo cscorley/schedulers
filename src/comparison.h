@@ -22,4 +22,7 @@ void highestPriorityScheduler(process *, int, char *);
 
 int main(int, char**);
 
+void run(char*);
+void generate(int);
+
 #endif
