@@ -11,19 +11,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "process.h"
-#include "queue.c"
+#include "queue.h"
+#include "comparison.h"
 
 #define TRUE 1
 #define FALSE 0
 #define MAX_FILE_LEN 64
 #define MAX_JOBS 32
 #define MAX_QUANTUM 10
-
-int readJobs(process *, char *);
-double calculateWait(char *, int);
-void roundRobinScheduler(process *, int, char *);
-void shortestJobScheduler(process *, int, char *);
-void highestPriorityScheduler(process *, int, char *);
 
 /*
  *
