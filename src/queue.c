@@ -22,6 +22,18 @@
 int isEmpty(queue * q) {
 	return (q->count == 0);
 }
+/*
+ *
+ * name: length
+ *
+ * Checks to see if the given queue has any nodes in it.
+ *
+ * @param	q	the queue to be checked
+ * @return	length of queue q
+ */
+int length(queue * q) {
+	return q->count;
+}
 
 /*
  *
@@ -45,7 +57,7 @@ void initialize(queue * q){
  * @param	q	the queue to be pushed onto
  * @param	j	the process job to be inserted into the node of the queue
  */
-void pushBySerivce(queue * q, process * j) {
+void pushByService(queue * q, process * j) {
 	struct node * newNode;
 	newNode = malloc(sizeof(struct node));
 	if(newNode == NULL){
@@ -139,6 +151,58 @@ void pushByPriority(queue * q, process * j) {
 
 /*
  *
+ * name: pushByArrival
+ *
+ * Pushes the given process job onto the given queue in an order so that the jobs with the lowest
+ * arrival are first
+ *
+ * @param	q	the queue to be pushed onto
+ * @param	j	the process job to be inserted into the node of the queue
+ */
+void pushByArrival(queue * q, process * j) {
+	struct node * newNode;
+	newNode = malloc(sizeof(struct node));
+	if(newNode == NULL){
+		printf("out of memory");
+		exit(1);
+	}
+    //printf("job push: %s %d %d %d\n", j->name, j->arrival, j->service, j->priority);
+    //fflush(stdout);
+
+	newNode->job = j;
+
+	if(!isEmpty(q)){
+		// some older code which finds where to insert
+		struct node * before;
+		struct node * after;
+		before = q->head;
+		after = q->head;
+		while(after != NULL && j->arrival >= after->job->arrival){
+			before = after;
+			after = after->next;
+		}
+
+		newNode->next = after;
+
+		if(after != q->head){
+			before->next = newNode;
+		}
+		else{
+			q->head = newNode;
+		}
+
+		q->count++;
+	}
+	else{
+		q->head = newNode;
+		q->head->next = NULL;
+		q->tail = q->head;
+		q->count = 1;
+	}
+}
+
+/*
+ *
  * name: push
  *
  * Pushes the given process job onto the given queue in an order of arrival (FIFO)
@@ -154,6 +218,8 @@ void push(queue * q, process * j) {
 		exit(1);
 	}
 
+    //printf("job push: %s %d %d %d\n", j->name, j->arrival, j->service, j->priority);
+    //fflush(stdout);
 	newNode->job = j;
 	newNode->next = NULL;
 
@@ -179,13 +245,39 @@ void push(queue * q, process * j) {
  * @return	the process job that was popped
  */
 process * pop(queue * q){
+    if(isEmpty(q)){
+        return NULL;
+    }
+
 	process * returning;
-	if(!isEmpty(q)){
-		returning = q->head->job;
-		struct node * deleting = q->head;
-		q->head = q->head->next;
-		q->count--;
-		free(deleting);
-	}
-	return returning;
+    returning = q->head->job;
+    struct node * deleting = q->head;
+    q->head = q->head->next;
+    q->count--;
+    free(deleting);
+    //printf("job pop: %s %d %d %d\n", returning->name, returning->arrival, returning->service, returning->priority);
+    //fflush(stdout);
+
+    return returning;
 }
+
+queue * copy(queue * q){
+    queue * nq = (queue *)malloc(sizeof(queue));
+    if(nq == NULL){
+        printf("out of memory");
+        exit(1);
+    }
+    initialize(nq);
+
+    struct node * nextNode;
+    if(!isEmpty(q)){
+        nextNode = q->head;
+        while(length(nq) < length(q) && nextNode != NULL){
+            push(nq, nextNode->job);
+            nextNode = nextNode->next;
+        }
+    }
+
+    return nq;
+}
+

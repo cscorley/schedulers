@@ -17,8 +17,6 @@
 #include "queue.h"
 #include "comparison.h"
 
-#define MAX_FILE_LEN 64
-#define MAX_JOBS 32
 #define MAX_QUANTUM 10
 
 /*
@@ -89,24 +87,27 @@ void generate(int testCount){
 }
 
 void run(char * input){
+    int jobCount;
     printf("Running Scheduler Comparison.\n\n");
 
     printf("Input file: %s", input);
 
     printf("\nReading file...");
-    process jobList[MAX_JOBS];
-    int jobCount = readJobs(jobList, input);
+    queue jobList;
+    initialize(&jobList);
+    readJobs(&jobList, input);
+    jobCount = length(&jobList);
 
-    printf("\nScheduling %d jobs:", jobCount);
+    printf("\nScheduling %d jobs\n", jobCount);
     fflush(stdout);
 
-    roundRobinScheduler(jobList, jobCount, "roundRobinResults.txt");
+    roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
     printf("\n\tRound robin complete.");
     fflush(stdout);
-    shortestJobScheduler(jobList, jobCount,"shortestJobResults.txt");
+    shortestJobScheduler(copy(&jobList),"shortestJobResults.txt");
     printf("\n\tShortest job complete.");
     fflush(stdout);
-    highestPriorityScheduler(jobList, jobCount, "highestPriorityResults.txt");
+    highestPriorityScheduler(copy(&jobList),"highestPriorityResults.txt");
     printf("\n\tHighest priority complete.");
     fflush(stdout);
 
@@ -142,30 +143,35 @@ void run(char * input){
  *
  * @param    processes    a process array of processes to be read into
  * @param    input    a character array of the file name to read from
- * @return  number of jobs read
  */
-int readJobs(process * processes, char * input){
+void readJobs(queue * processes, char * input){
     FILE* infile;
-    int i = 0;
+    process * p = (process *)malloc(sizeof(process));
+    if(p == NULL){
+        printf("out of memory");
+        exit(1);
+    }
     infile = fopen(input, "r");
     if(infile != NULL){
-        for(i=0;i<MAX_JOBS;i++){
-            if (fscanf(infile, "%s %d %d %d",
-                processes[i].name,
-                &processes[i].arrival,
-                &processes[i].service,
-                &processes[i].priority) < 1){
-                break;
+        while(fscanf(infile, "%s %d %d %d",
+                p->name,
+                &p->arrival,
+                &p->service,
+                &p->priority) == 4){
+            p->timeleft = p->service;
+            pushByArrival(processes, p);
+            p = (process *)malloc(sizeof(process));
+            if(p == NULL){
+                printf("out of memory");
+                exit(1);
             }
-            processes[i].timeleft = processes[i].service;
         }
         fclose(infile);
     }
     else{
-        printf("Could not open input file!");
+        printf("Could not open input file!\n");
         exit(1);
     }
-    return i;
 }
 
 /*
@@ -181,15 +187,14 @@ double calculateWait(char * fileName, int jobCount)
 {
     int totalWait = 0;
     int tempWait;
-    char garbage[1];
+    char garbage[32];
     int trash;
-    int i;
 
     FILE * inFile;
     inFile = fopen(fileName, "r");
     if (inFile != NULL){
-        for(i = 0; i< jobCount; i++){
-            fscanf(inFile, "%s %d %d %d", garbage, &trash, &tempWait, &trash);
+        while(fscanf(inFile, "%s %d %d %d", 
+                    garbage, &trash, &tempWait, &trash) == 4){
             totalWait += tempWait;
         }
         fclose(inFile);
@@ -207,18 +212,26 @@ double calculateWait(char * fileName, int jobCount)
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void roundRobinScheduler(process * processes, int jobCount, char* output){
+void roundRobinScheduler(queue * processes,char* output){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
         // make a couple things needed
         process * inCPU = (process *)malloc(sizeof(process));
+        process * nextJob;
         queue waiting;
 
+        if (!isEmpty(processes)){
+            nextJob = pop(processes);
+        }
+        else{
+            printf("No jobs?");
+            exit(1);
+        }
+            
         // initialize everything before starting
         initialize(&waiting);
         inCPU->timeleft = -1;
-        int currentJob = 0;
         int clock = -1;
         int quantum = MAX_QUANTUM + 1;
         bool CPUfree = true;
@@ -241,15 +254,18 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
                 inCPU = pop(&waiting);
                 quantum = MAX_QUANTUM;
             }
-            while(processes[currentJob].arrival == clock){
-                if(currentJob < jobCount){
-                    push( &waiting, &processes[currentJob]);
-                    currentJob++;
+            while(nextJob != NULL) { //&& nextJob->arrival <= clock){
+                if(nextJob->arrival <= clock){
+                    push(&waiting, nextJob);
+                    nextJob = pop(processes);
+                }
+                else{
+                    break;
                 }
             }
             if(CPUfree){
                 if(isEmpty(&waiting)){
-                    if(currentJob == jobCount){
+                    if(isEmpty(processes)){
                         break;
                     }
                 }
@@ -266,7 +282,7 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
         fclose(outfile);
     }
     else{
-        printf("Could not open output file!");
+        printf("Could not open output file!\n");
         exit(1);
     }
 }
@@ -280,19 +296,28 @@ void roundRobinScheduler(process * processes, int jobCount, char* output){
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void shortestJobScheduler(process * processes, int jobCount, char* output){
+void shortestJobScheduler(queue * processes, char* output){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
         // make a couple things needed
         process * inCPU = (process *)malloc(sizeof(process));
+        process * nextJob;
         queue waiting;
+
+        if (!isEmpty(processes)){
+            nextJob = pop(processes);
+        }
+        else{
+            printf("No jobs?");
+            exit(1);
+        }
+
 
         // initialize everything before starting
         initialize(&waiting);
         inCPU->timeleft = -1;
         int clock = -1;
-        int currentJob = 0;
         bool CPUfree = true;
 
         //begin simulation
@@ -307,15 +332,18 @@ void shortestJobScheduler(process * processes, int jobCount, char* output){
                     clock);
                 CPUfree = true;
             }
-            while(processes[currentJob].arrival == clock){
-                if(currentJob < jobCount){
-                    pushBySerivce( &waiting, &processes[currentJob]);
-                    currentJob++;
+            while(nextJob != NULL){
+                if(nextJob->arrival <= clock){
+                    pushByService(&waiting, nextJob);
+                    nextJob = pop(processes);
+                }
+                else{
+                    break;
                 }
             }
             if(CPUfree){
                 if(isEmpty(&waiting)){
-                    if(currentJob == jobCount){ 
+                    if(isEmpty(processes)){
                         break;
                     }
                 }
@@ -345,22 +373,31 @@ void shortestJobScheduler(process * processes, int jobCount, char* output){
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void highestPriorityScheduler(process * processes, int jobCount, char* output){
+void highestPriorityScheduler(queue * processes, char* output){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
         // make a couple things needed
         process * inCPU = (process *)malloc(sizeof(process));
+        process * nextJob;
         queue waiting;
+
+        if (!isEmpty(processes)){
+            nextJob = pop(processes);
+        }
+        else{
+            printf("No jobs?");
+            exit(1);
+        }
+
 
         // initialize everything before starting
         initialize(&waiting);
         inCPU->timeleft = -1;
         int clock = -1;
-        int currentJob = 0;
         bool CPUfree = true;
 
-        // begin simulation
+        //begin simulation
         while(true){
             clock++;
             inCPU->timeleft--;
@@ -369,18 +406,21 @@ void highestPriorityScheduler(process * processes, int jobCount, char* output){
                     inCPU->name,
                     inCPU->arrival,
                     clock - inCPU->service - inCPU->arrival, // the wait time
-                    clock );
+                    clock);
                 CPUfree = true;
             }
-            while(processes[currentJob].arrival == clock){
-                if(currentJob < jobCount){
-                    pushByPriority(&waiting, &processes[currentJob]);
-                    currentJob++;
+            while(nextJob != NULL){
+                if(nextJob->arrival <= clock){
+                    pushByPriority(&waiting, nextJob);
+                    nextJob = pop(processes);
+                }
+                else{
+                    break;
                 }
             }
             if(CPUfree){
                 if(isEmpty(&waiting)){
-                    if(currentJob == jobCount){
+                    if(isEmpty(processes)){
                         break;
                     }
                 }

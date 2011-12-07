@@ -14,11 +14,11 @@
 #include "queue.h"
 
 
-int readJobs(process *, char *);
+void readJobs(queue *, char *);
 double calculateWait(char *, int);
-void roundRobinScheduler(process *, int, char *);
-void shortestJobScheduler(process *, int, char *);
-void highestPriorityScheduler(process *, int, char *);
+void roundRobinScheduler(queue *, char *);
+void shortestJobScheduler(queue *, char *);
+void highestPriorityScheduler(queue *, char *);
 
 int main(int, char**);
 

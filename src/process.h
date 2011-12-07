@@ -9,7 +9,7 @@
 #define process_h
 
 typedef struct{
-	char name[2];
+	char name[32];
 	int arrival;
 	int service;
 	int priority;

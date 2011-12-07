@@ -24,9 +24,12 @@ typedef struct{
 
 void initialize(queue*);
 int isEmpty(queue*);
+int length(queue *);
 void push(queue*, process*);
 void pushByPriority(queue*, process*);
-void pushBySerivce(queue*, process*);
+void pushByService(queue*, process*);
+void pushByArrival(queue*, process*);
 process * pop(queue*);
+queue * copy(queue *);
 
 #endif
