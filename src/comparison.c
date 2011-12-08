@@ -154,17 +154,9 @@ void run(char * input){
 
     printf("\nScheduling %d jobs\n", jobCount);
 
-    printf("esfrwef");
-    fflush(stdout);
     generalScheduler(copy(&jobList),"shortestJobResults.txt", &service_less_func);
-    printf("esfrwef");
-    fflush(stdout);
     generalScheduler(copy(&jobList),"highestPriorityResults.txt", &priority_more_func);
-    printf("esfrwef");
-    fflush(stdout);
     roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
-    printf("esfrwef");
-    fflush(stdout);
 printf("\n\nDone!");
 
     printf("\n\nThe results from input file \"%s\":", input);
@@ -296,7 +288,6 @@ void roundRobinScheduler(queue * processes, char* output){
             clock++;
             inCPU->timeleft--;
             if(inCPU->timeleft == 0){
-//                printf("\ntime %d",clock);
                 fprintf(outfile, "%s %d %d %d\n",
                     inCPU->name,
                     inCPU->arrival,
@@ -311,7 +302,6 @@ void roundRobinScheduler(queue * processes, char* output){
             }
             while(nextJob != NULL) { //&& nextJob->arrival <= clock){
                 if(nextJob->arrival <= clock){
-//                    printf("\nnext job: %d\ntime %d",nextJob->service,clock);
                     nextJob->timeleft = nextJob->service;
                     push(&waiting, nextJob);
                     nextJob = pop(processes);
@@ -328,9 +318,6 @@ void roundRobinScheduler(queue * processes, char* output){
                 }
                 else{
                     inCPU = pop(&waiting);
-//                    if(inCPU->timeleft <= 0){
-//                        inCPU->timeleft = inCPU->service;
-//                    }
                     quantum = MAX_QUANTUM;
                     CPUfree = false;
                 }
@@ -407,9 +394,6 @@ void generalScheduler(queue * processes, char* output, bool(*comp)(process *, pr
                 }
                 else{
                     inCPU = pop(&waiting);
-//                    if(inCPU->timeleft <= 0){
-//                        inCPU->timeleft = inCPU->service;
-//                    }
                     CPUfree = false;
                 }
             }
