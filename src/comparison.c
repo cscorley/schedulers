@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <stdbool.h>
 #include <string.h>
 #include "process.h"
@@ -18,6 +19,13 @@
 #include "comparison.h"
 
 #define MAX_QUANTUM 10
+
+// maximums for generation
+#define MAX_PRIORITY 20
+#define MAX_ARRIVAL 250
+#define MAX_SERVICE 250
+#define MAX_JOBS 100
+
 
 bool arrival_less_func(process * a, process * b){
     return (a->arrival < b->arrival);
@@ -94,8 +102,42 @@ int main(int argc, char** argv)
 }
 
 void generate(int testCount){
-    printf("%d pancakes for everyone!!!", testCount);
-    return;
+    int i;
+    int j;
+    FILE* outfile;
+    char * test = "generatedTest";
+
+    unsigned int genJobs;
+    unsigned int genArrival;
+    unsigned int genService;
+    unsigned int genPriority;
+
+    // set random seed
+    unsigned int iseed = (unsigned int)time(NULL);
+    srand (iseed);
+
+    for (i=0; i < testCount; i++){
+        outfile = fopen(test, "w");
+        // generate file
+        if (outfile != NULL){
+            genJobs = rand() % MAX_JOBS;
+            for (j=0; j < genJobs; j++){
+                genArrival = rand () % MAX_ARRIVAL;
+                genService = rand () % MAX_SERVICE;
+                genPriority = rand () % MAX_PRIORITY;
+
+                fprintf(outfile, "GENJOB_%d %d %d %d\n",
+                       j, genArrival, genService, genPriority); 
+            }
+
+            fclose(outfile);
+        }
+        else{
+            printf("could not open output file for generation");
+            exit(1);
+        }
+        // run tests on file?
+    }
 }
 
 void run(char * input){
@@ -112,9 +154,17 @@ void run(char * input){
 
     printf("\nScheduling %d jobs\n", jobCount);
 
-    roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
+    printf("esfrwef");
+    fflush(stdout);
     generalScheduler(copy(&jobList),"shortestJobResults.txt", &service_less_func);
+    printf("esfrwef");
+    fflush(stdout);
     generalScheduler(copy(&jobList),"highestPriorityResults.txt", &priority_more_func);
+    printf("esfrwef");
+    fflush(stdout);
+    roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
+    printf("esfrwef");
+    fflush(stdout);
 
     printf("\n\nDone!");
 
