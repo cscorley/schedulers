@@ -154,19 +154,25 @@ void run(char * input){
 
     printf("\nScheduling %d jobs\n", jobCount);
 
-    generalScheduler(copy(&jobList),"shortestJobResults.txt", &service_less_func);
-    generalScheduler(copy(&jobList),"highestPriorityResults.txt", &priority_more_func);
+    generalScheduler(copy(&jobList),"shortestJobResults.txt", false, &service_less_func);
+    generalScheduler(copy(&jobList),"shortestRemainResults.txt", true, &service_less_func);
+    generalScheduler(copy(&jobList),"highestPriorityResults.txt", false, &priority_more_func);
+    generalScheduler(copy(&jobList),"highestPriorityPreemptResults.txt", true, &priority_more_func);
     roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
 printf("\n\nDone!");
 
     printf("\n\nThe results from input file \"%s\":", input);
     double roundRobinAverage = calculateWait("roundRobinResults.txt", jobCount);
     double shortestJobAverage = calculateWait("shortestJobResults.txt", jobCount);
+    double shortestRJobAverage = calculateWait("shortestRemainResults.txt", jobCount);
     double highestPriorityAverage = calculateWait("highestPriorityResults.txt", jobCount);
+    double highestPriorityPAverage = calculateWait("highestPriorityPreemptResults.txt", jobCount);
 
     printf("\nRound Robin wait time average: %f", roundRobinAverage);
     printf("\nShortest Job First wait time average: %f", shortestJobAverage);
+    printf("\nShortest Remaining Time First wait time average: %f", shortestRJobAverage);
     printf("\nHighest Priority First wait time average: %f", highestPriorityAverage);
+    printf("\nHighest Priority First Preemptive wait time average: %f", highestPriorityPAverage);
 
     printf("\n\nThe best scheduler for the data set was ");
     if(roundRobinAverage < shortestJobAverage && roundRobinAverage < highestPriorityAverage){
@@ -340,7 +346,7 @@ void roundRobinScheduler(queue * processes, char* output){
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void generalScheduler(queue * processes, char* output, bool(*comp)(process *, process *)){
+void generalScheduler(queue * processes, char* output, bool preemptive, bool(*comp)(process *, process *)){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
@@ -363,6 +369,7 @@ void generalScheduler(queue * processes, char* output, bool(*comp)(process *, pr
         inCPU->timeleft = -1;
         int clock = -1;
         bool CPUfree = true;
+        bool addedProc = false;
 
         //begin simulation
         while(true){
@@ -376,15 +383,16 @@ void generalScheduler(queue * processes, char* output, bool(*comp)(process *, pr
                     clock);
                 CPUfree = true;
             }
-            while(nextJob != NULL){
-                if(nextJob->arrival <= clock){
+            while(nextJob != NULL && nextJob->arrival <= clock){
                     nextJob->timeleft = nextJob->service;
                     pushOrdered(&waiting, nextJob, comp);
                     nextJob = pop(processes);
-                }
-                else{
-                    break;
-                }
+                    addedProc = true;
+            }
+            if (preemptive && addedProc && inCPU->timeleft > 0) {
+                pushOrdered(&waiting, inCPU, comp);
+                CPUfree = true;
+                addedProc = false;
             }
             if(CPUfree){
                 if(isEmpty(&waiting)){
