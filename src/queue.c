@@ -162,6 +162,11 @@ process * pop(queue * q){
     return returning;
 }
 
+process * top(queue * q){
+    return q->head->job;
+    
+}
+
 queue * copy(queue * q){
     queue * nq = (queue *)malloc(sizeof(queue));
     if(nq == NULL){

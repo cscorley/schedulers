@@ -31,6 +31,7 @@ int length(queue *);
 void push(queue*, process*);
 void pushOrdered(queue*, process*, bool(*)(process *, process *));
 process * pop(queue*);
+process * top(queue*);
 queue * copy(queue *);
 
 #endif
