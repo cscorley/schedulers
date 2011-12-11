@@ -389,11 +389,14 @@ void generalScheduler(queue * processes, char* output, bool preemptive, bool(*co
                     nextJob = pop(processes);
                     addedProc = true;
             }
+
             if (preemptive && addedProc && inCPU->timeleft > 0) {
-                pushOrdered(&waiting, inCPU, comp);
-                CPUfree = true;
-                addedProc = false;
+                if (comp(top(&waiting),inCPU) == 1 ){
+                    pushOrdered(&waiting, inCPU, comp);
+                    CPUfree = true;
+                }
             }
+            addedProc = false;
             if(CPUfree){
                 if(isEmpty(&waiting)){
                     if(isEmpty(processes)){

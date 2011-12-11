@@ -164,7 +164,6 @@ process * pop(queue * q){
 
 process * top(queue * q){
     return q->head->job;
-    
 }
 
 queue * copy(queue * q){
