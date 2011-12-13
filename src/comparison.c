@@ -174,36 +174,36 @@ printf("\n\nDone!");
     printf("\nHighest Priority First wait time average: %f", highestPriorityAverage);
     printf("\nHighest Priority First Preemptive wait time average: %f", highestPriorityPAverage);
 
-    printf("\n\nThe best scheduler for the data set was ");
-    if(roundRobinAverage < shortestJobAverage 
-        && roundRobinAverage < shortestRJobAverage 
-        && roundRobinAverage < highestPriorityAverage
-        && roundRobinAverage < highestPriorityPAverage){
-        printf("Round Robin.");
+    printf("\n\nThe best scheduler(s) for the data set was ");
+    if(roundRobinAverage <= shortestJobAverage 
+        && roundRobinAverage <= shortestRJobAverage 
+        && roundRobinAverage <= highestPriorityAverage
+        && roundRobinAverage <= highestPriorityPAverage){
+        printf("\n\t\t\tRound Robin");
     }
-    else if(shortestJobAverage < roundRobinAverage 
-            && shortestJobAverage < shortestRJobAverage 
-            && shortestJobAverage < highestPriorityAverage
-            && shortestJobAverage < highestPriorityPAverage){
-        printf("Shortest Job First.");
+    if(shortestJobAverage <= roundRobinAverage 
+            && shortestJobAverage <= shortestRJobAverage 
+            && shortestJobAverage <= highestPriorityAverage
+            && shortestJobAverage <= highestPriorityPAverage){
+        printf("\n\t\t\tShortest Job First");
     }
-    else if(shortestRJobAverage < roundRobinAverage 
-            && shortestRJobAverage < shortestJobAverage 
-            && shortestRJobAverage < highestPriorityAverage
-            && shortestRJobAverage < highestPriorityPAverage){
-        printf("Shortest Remaining Time First.");
+    if(shortestRJobAverage <= roundRobinAverage 
+            && shortestRJobAverage <= shortestJobAverage 
+            && shortestRJobAverage <= highestPriorityAverage
+            && shortestRJobAverage <= highestPriorityPAverage){
+        printf("\n\t\t\tShortest Remaining Time First");
     }
-    else if(highestPriorityAverage < shortestJobAverage 
-            && highestPriorityAverage < shortestRJobAverage 
-            && highestPriorityAverage < highestPriorityPAverage 
-            && highestPriorityAverage < roundRobinAverage){
-        printf("Highest Priority First.");
+    if(highestPriorityAverage <= shortestJobAverage 
+            && highestPriorityAverage <= shortestRJobAverage 
+            && highestPriorityAverage <= highestPriorityPAverage 
+            && highestPriorityAverage <= roundRobinAverage){
+        printf("\n\t\t\tHighest Priority First");
     }
-    else if(highestPriorityPAverage < shortestJobAverage 
-            && highestPriorityPAverage < shortestRJobAverage 
-            && highestPriorityPAverage < highestPriorityAverage 
-            && highestPriorityPAverage < roundRobinAverage){
-        printf("Highest Priority First (Premptive).");
+    if(highestPriorityPAverage <= shortestJobAverage 
+            && highestPriorityPAverage <= shortestRJobAverage 
+            && highestPriorityPAverage <= highestPriorityAverage 
+            && highestPriorityPAverage <= roundRobinAverage){
+        printf("\n\t\t\tHighest Priority First (Premptive)");
     }
 
 }
