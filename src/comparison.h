@@ -16,12 +16,12 @@
 
 void readJobs(queue *, char *);
 double calculateWait(char *, int);
-void roundRobinScheduler(queue *, char *);
+void roundRobinScheduler(queue *, char *, int);
 void generalScheduler(queue *, char *, bool, bool(*)(process*,process*));
 
 int main(int, char**);
 
-void run(char*);
-void generate(int);
+void run(char*, int);
+void generate(char*);
 
 #endif

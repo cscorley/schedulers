@@ -18,12 +18,13 @@
 #include "queue.h"
 #include "comparison.h"
 
-#define MAX_QUANTUM 10
+// default values
+#define DEF_QUANTUM 10
 
 // maximums for generation
 #define MAX_PRIORITY 20
 #define MAX_ARRIVAL 250
-#define MAX_SERVICE 250
+#define MAX_SERVICE 100
 #define MAX_JOBS 100
 
 
@@ -52,16 +53,17 @@ int main(int argc, char** argv)
     bool gFlag = false;
     int opt;
     char * argFileName;
-    int argTestCount;
+    int quantum = DEF_QUANTUM;
 
-    // get the passed options from the user
     // options c and n are required to run.
-    while ((opt = getopt(argc, argv, "hg:i:")) != -1) {
+    while ((opt = getopt(argc, argv, "hq:g:i:")) != -1) {
         switch (opt) {
             case 'h':
-                printf("Usage: %s (-i input_file | -g number)\n\n", argv[0]);
+                printf("Usage: %s (-i input_file | -g output_file) [-q quantum]\n\n", argv[0]);
                 printf("Options:\n\t-i\tInput file for testing");
-                printf("\n\t-g\tGenerate the given number of random tests");
+                printf("\n\t-g\tGenerate random test to this file and run it");
+                printf("\n\t-q\tUse this value as the quantum in the round\
+robin scheduler. Default is %d", DEF_QUANTUM);
                 printf("\n\n\t-h\tDisplays this help message\n");                
                 exit(EXIT_SUCCESS);        
             case 'i':
@@ -75,7 +77,18 @@ int main(int argc, char** argv)
                 break;
             case 'g':
                 gFlag = true;
-                argTestCount = atoi(optarg);
+                argFileName = (char *)malloc(strlen(optarg));
+                if(argFileName == NULL){
+                    printf("Can't get memory!");
+                    exit(EXIT_FAILURE);
+                }
+                strcpy(argFileName, optarg);
+                break;
+            case 'q':
+                quantum = atoi(optarg);
+                if (quantum < 1){
+                    quantum = DEF_QUANTUM;
+                }
                 break;
             default: /* '?' */
                 fprintf(stderr, "Usage: %s [-i input_file] [-g number]\n\n", argv[0]);
@@ -87,13 +100,18 @@ int main(int argc, char** argv)
         printf("Expected at least one option, either -i or -g. See help (%s -h)\n\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
-    if (iFlag){
-        run(argFileName);
+    if (iFlag && gFlag){
+        printf("Expected only one option, either -i or -g. See help (%s -h)\n\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
 
-    if (gFlag){
-        generate(argTestCount);
+
+    if (iFlag){
+        run(argFileName, quantum);
+    }
+    else if (gFlag){
+        generate(argFileName);
+        run(argFileName, quantum);
     }
 
     // might as well?
@@ -101,11 +119,9 @@ int main(int argc, char** argv)
     exit(EXIT_SUCCESS);
 }
 
-void generate(int testCount){
-    int i;
+void generate(char * test){
     int j;
     FILE* outfile;
-    char * test = "generatedTest";
 
     unsigned int genJobs;
     unsigned int genArrival;
@@ -116,32 +132,31 @@ void generate(int testCount){
     unsigned int iseed = (unsigned int)time(NULL);
     srand (iseed);
 
-    for (i=0; i < testCount; i++){
-        outfile = fopen(test, "w");
-        // generate file
-        if (outfile != NULL){
-            genJobs = rand() % MAX_JOBS;
-            for (j=0; j < genJobs; j++){
-                genArrival = rand () % MAX_ARRIVAL;
-                genService = rand () % MAX_SERVICE;
-                genPriority = rand () % MAX_PRIORITY;
+    outfile = fopen(test, "w");
+    // generate file
+    if (outfile != NULL){
+        genJobs = (rand() % MAX_JOBS + 1) + 1;
+        for (j=0; j < genJobs; j++){
+            genArrival = rand () % MAX_ARRIVAL;
+            genService = rand () % MAX_SERVICE;
+            genPriority = rand () % MAX_PRIORITY;
 
-                fprintf(outfile, "GENJOB_%d %d %d %d\n",
-                       j, genArrival, genService, genPriority); 
-            }
+            fprintf(outfile, "GENJOB_%d %d %d %d\n",
+                   j, genArrival, genService, genPriority); 
+        }
 
-            fclose(outfile);
-        }
-        else{
-            printf("could not open output file for generation");
-            exit(1);
-        }
-        // run tests on file?
+        fclose(outfile);
     }
+    else{
+        printf("could not open output file for generation");
+        exit(1);
+    }
+    // run tests on file?
 }
 
-void run(char * input){
+void run(char * input, int quantum){
     int jobCount;
+    char output[strlen(input) + 36];
     printf("Running Scheduler Comparison.\n\n");
 
     printf("Input file: %s", input);
@@ -154,19 +169,33 @@ void run(char * input){
 
     printf("\nScheduling %d jobs\n", jobCount);
 
-    generalScheduler(copy(&jobList),"shortestJobResults.txt", false, &service_less_func);
-    generalScheduler(copy(&jobList),"shortestRemainResults.txt", true, &service_less_func);
-    generalScheduler(copy(&jobList),"highestPriorityResults.txt", false, &priority_more_func);
-    generalScheduler(copy(&jobList),"highestPriorityPreemptResults.txt", true, &priority_more_func);
-    roundRobinScheduler(copy(&jobList), "roundRobinResults.txt");
-printf("\n\nDone!");
+    strcpy(output, input);
+    strcat(output, "_shortestJobResults.txt");
+    generalScheduler(copy(&jobList), output, false, &service_less_func);
+    double shortestJobAverage = calculateWait(output, jobCount);
+
+    strcpy(output, input);
+    strcat(output, "_shortestRemainingResults.txt");
+    generalScheduler(copy(&jobList), output, true, &service_less_func);
+    double shortestRJobAverage = calculateWait(output, jobCount);
+
+    strcpy(output, input);
+    strcat(output, "_highestPriorityResults.txt");
+    generalScheduler(copy(&jobList), output, false, &priority_more_func);
+    double highestPriorityAverage = calculateWait(output, jobCount);
+
+    strcpy(output, input);
+    strcat(output, "_highestPriorityPreemptResults.txt");
+    generalScheduler(copy(&jobList), output, true, &priority_more_func);
+    double highestPriorityPAverage = calculateWait(output, jobCount);
+
+    strcpy(output, input);
+    strcat(output, "_roundRobinResults.txt");
+    roundRobinScheduler(copy(&jobList), output, quantum);
+    double roundRobinAverage = calculateWait(output, jobCount);
+    printf("\n\nDone!");
 
     printf("\n\nThe results from input file \"%s\":", input);
-    double roundRobinAverage = calculateWait("roundRobinResults.txt", jobCount);
-    double shortestJobAverage = calculateWait("shortestJobResults.txt", jobCount);
-    double shortestRJobAverage = calculateWait("shortestRemainResults.txt", jobCount);
-    double highestPriorityAverage = calculateWait("highestPriorityResults.txt", jobCount);
-    double highestPriorityPAverage = calculateWait("highestPriorityPreemptResults.txt", jobCount);
 
     printf("\nRound Robin wait time average: %f", roundRobinAverage);
     printf("\nShortest Job First wait time average: %f", shortestJobAverage);
@@ -285,7 +314,7 @@ double calculateWait(char * fileName, int jobCount)
  * @param    processes    a process array of processes to be scheduled for work in the CPU
  * @param    output    a character array of the file name to be printed to
  */
-void roundRobinScheduler(queue * processes, char* output){
+void roundRobinScheduler(queue * processes, char* output, int user_quantum){
     FILE* outfile;
     outfile = fopen(output, "w");
     if(outfile != NULL){
@@ -306,7 +335,7 @@ void roundRobinScheduler(queue * processes, char* output){
         initialize(&waiting);
         inCPU->timeleft = -1;
         int clock = -1;
-        int quantum = MAX_QUANTUM + 1;
+        int quantum = user_quantum + 1; // set one higher for first loop
         bool CPUfree = true;
 
         //begin simulation
@@ -325,7 +354,7 @@ void roundRobinScheduler(queue * processes, char* output){
             if(quantum == 0 && !CPUfree){
                 push(&waiting, inCPU);
                 inCPU = pop(&waiting);
-                quantum = MAX_QUANTUM;
+                quantum = user_quantum;
             }
             while(nextJob != NULL) { //&& nextJob->arrival <= clock){
                 if(nextJob->arrival <= clock){
@@ -345,7 +374,7 @@ void roundRobinScheduler(queue * processes, char* output){
                 }
                 else{
                     inCPU = pop(&waiting);
-                    quantum = MAX_QUANTUM;
+                    quantum = user_quantum;
                     CPUfree = false;
                 }
             }
