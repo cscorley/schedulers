@@ -26,6 +26,7 @@
 #define MAX_ARRIVAL 250
 #define MAX_SERVICE 100
 #define MAX_JOBS 100
+#define MIN_JOBS 10
 
 
 bool arrival_less_func(process * a, process * b){
@@ -135,7 +136,7 @@ void generate(char * test){
     outfile = fopen(test, "w");
     // generate file
     if (outfile != NULL){
-        genJobs = (rand() % MAX_JOBS + 1) + 1;
+        genJobs = rand() % (MAX_JOBS - MIN_JOBS + 1) + MIN_JOBS;
         for (j=0; j < genJobs; j++){
             genArrival = rand () % MAX_ARRIVAL;
             genService = rand () % MAX_SERVICE;
