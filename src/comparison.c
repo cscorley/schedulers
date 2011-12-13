@@ -356,15 +356,10 @@ void roundRobinScheduler(queue * processes, char* output, int user_quantum){
                 inCPU = pop(&waiting);
                 quantum = user_quantum;
             }
-            while(nextJob != NULL) { //&& nextJob->arrival <= clock){
-                if(nextJob->arrival <= clock){
-                    nextJob->timeleft = nextJob->service;
-                    push(&waiting, nextJob);
-                    nextJob = pop(processes);
-                }
-                else{
-                    break;
-                }
+            while(nextJob != NULL && nextJob->arrival <= clock){
+                nextJob->timeleft = nextJob->service;
+                push(&waiting, nextJob);
+                nextJob = pop(processes);
             }
             if(CPUfree){
                 if(isEmpty(&waiting)){
